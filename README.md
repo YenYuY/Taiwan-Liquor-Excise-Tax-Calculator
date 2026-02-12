@@ -2,6 +2,8 @@
 
 **Taiwan Liquor Excise Tax Calculator**
 
+![TLETC Logo](./logo-tletc.svg)
+
 This webpage was created with Codex.  
 Some information/messages may be incomplete.
 

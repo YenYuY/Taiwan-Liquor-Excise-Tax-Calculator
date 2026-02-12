@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Taiwan Alcohol Tax Calculator</title>
+    <link rel="icon" type="image/svg+xml" href="./logo-tletc.svg" />
+    <link rel="apple-touch-icon" href="./logo-tletc.svg" />
     <style>
       :root {
         color-scheme: dark;
@@ -60,6 +62,22 @@
         font-size: clamp(1.4rem, 2vw, 1.9rem);
         font-weight: 700;
         letter-spacing: 0.3px;
+      }
+
+      .brand {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+      }
+
+      .brand-logo {
+        width: 60px;
+        height: 60px;
+        border-radius: 14px;
+        object-fit: cover;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(8, 13, 20, 0.85);
+        flex-shrink: 0;
       }
 
       .subtitle {
@@ -223,15 +241,23 @@
           flex-direction: column;
           align-items: stretch;
         }
+
+        .brand-logo {
+          width: 52px;
+          height: 52px;
+        }
       }
     </style>
   </head>
   <body>
     <main class="app">
       <section class="top">
-        <div>
-          <h1 class="title" data-i18n="title"></h1>
-          <p class="subtitle" data-i18n="subtitle"></p>
+        <div class="brand">
+          <img class="brand-logo" src="./logo-tletc.svg" alt="TLETC Logo" />
+          <div>
+            <h1 class="title" data-i18n="title"></h1>
+            <p class="subtitle" data-i18n="subtitle"></p>
+          </div>
         </div>
         <button id="langBtn" class="lang-btn" type="button"></button>
       </section>
