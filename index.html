@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Taiwan Alcohol Tax Calculator</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg-1: #0a1018;
+        --bg-2: #111d2a;
+        --card: rgba(24, 36, 51, 0.82);
+        --card-border: rgba(255, 255, 255, 0.11);
+        --text: #eef2f7;
+        --muted: #a5b5c6;
+        --accent: #f59e0b;
+        --accent-2: #38bdf8;
+        --ok: #5ee6b8;
+        --danger: #ff6b81;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Noto Sans TC", "Segoe UI", "Helvetica Neue", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(1200px 700px at -10% -10%, #1d2d42 0%, transparent 55%),
+          radial-gradient(900px 600px at 115% 20%, #1e3a5f 0%, transparent 58%),
+          linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 100%);
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+
+      .app {
+        width: min(820px, 100%);
+        border: 1px solid var(--card-border);
+        border-radius: 18px;
+        background: var(--card);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+        overflow: hidden;
+      }
+
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        gap: 16px;
+        padding: 24px 24px 14px;
+      }
+
+      .title {
+        margin: 0;
+        font-size: clamp(1.4rem, 2vw, 1.9rem);
+        font-weight: 700;
+        letter-spacing: 0.3px;
+      }
+
+      .subtitle {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+        line-height: 1.45;
+      }
+
+      .lang-btn {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text);
+        border-radius: 999px;
+        padding: 9px 14px;
+        font-size: 0.9rem;
+        cursor: pointer;
+      }
+
+      .lang-btn:hover {
+        border-color: rgba(255, 255, 255, 0.35);
+      }
+
+      .content {
+        padding: 8px 24px 24px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .field {
+        display: grid;
+        gap: 7px;
+      }
+
+      .full {
+        grid-column: 1 / -1;
+      }
+
+      label {
+        font-size: 0.88rem;
+        color: #d7dfeb;
+      }
+
+      input,
+      select,
+      button {
+        font: inherit;
+      }
+
+      input,
+      select {
+        width: 100%;
+        border-radius: 11px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(11, 18, 27, 0.72);
+        color: var(--text);
+        padding: 11px 12px;
+      }
+
+      input:disabled {
+        opacity: 0.6;
+      }
+
+      .hint {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.8rem;
+        min-height: 1.2em;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 8px;
+      }
+
+      .btn {
+        border: 0;
+        border-radius: 11px;
+        padding: 11px 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .btn.primary {
+        background: linear-gradient(135deg, var(--accent), #f97316);
+        color: #24190a;
+      }
+
+      .btn.secondary {
+        background: rgba(255, 255, 255, 0.12);
+        color: var(--text);
+      }
+
+      .result {
+        margin-top: 18px;
+        border: 1px solid rgba(94, 230, 184, 0.35);
+        border-radius: 14px;
+        background: rgba(25, 56, 53, 0.32);
+        padding: 15px;
+      }
+
+      .result h2 {
+        margin: 0 0 10px;
+        font-size: 1rem;
+      }
+
+      .rows {
+        display: grid;
+        gap: 6px;
+      }
+
+      .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .row .k {
+        color: var(--muted);
+      }
+
+      .row .v {
+        font-variant-numeric: tabular-nums;
+      }
+
+      .legal {
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.4;
+      }
+
+      .legal a {
+        color: var(--accent-2);
+      }
+
+      .error {
+        margin-top: 10px;
+        color: var(--danger);
+        min-height: 1.2em;
+        font-size: 0.86rem;
+      }
+
+      @media (max-width: 760px) {
+        .top,
+        .content {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .top {
+          flex-direction: column;
+          align-items: stretch;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="top">
+        <div>
+          <h1 class="title" data-i18n="title"></h1>
+          <p class="subtitle" data-i18n="subtitle"></p>
+        </div>
+        <button id="langBtn" class="lang-btn" type="button"></button>
+      </section>
+
+      <section class="content">
+        <form id="taxForm" novalidate>
+          <div class="grid">
+            <div class="field full">
+              <label for="category" data-i18n="categoryLabel"></label>
+              <select id="category" required></select>
+              <p class="hint" id="categoryHint"></p>
+            </div>
+
+            <div class="field">
+              <label for="abv" data-i18n="abvLabel"></label>
+              <input id="abv" type="number" min="0" max="100" step="0.1" value="5" />
+              <p class="hint" id="abvHint"></p>
+            </div>
+
+            <div class="field">
+              <label for="volumeMl" data-i18n="volumeLabel"></label>
+              <input id="volumeMl" type="number" min="1" step="1" value="600" required />
+            </div>
+
+            <div class="field">
+              <label for="quantity" data-i18n="qtyLabel"></label>
+              <input id="quantity" type="number" min="1" step="1" value="1" required />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn primary" type="submit" data-i18n="calcBtn"></button>
+            <button class="btn secondary" type="button" id="resetBtn" data-i18n="resetBtn"></button>
+          </div>
+          <p class="error" id="errorText"></p>
+        </form>
+
+        <section class="result">
+          <h2 data-i18n="resultTitle"></h2>
+          <div class="rows">
+            <div class="row">
+              <span class="k" data-i18n="appliedRule"></span>
+              <span class="v" id="ruleText">-</span>
+            </div>
+            <div class="row">
+              <span class="k" data-i18n="perBottle"></span>
+              <span class="v" id="perBottleTax">-</span>
+            </div>
+            <div class="row">
+              <span class="k" data-i18n="total"></span>
+              <span class="v" id="totalTax">-</span>
+            </div>
+          </div>
+        </section>
+
+        <p class="legal" data-i18n="legalNote"></p>
+      </section>
+    </main>
+
+    <script>
+      const categoryRates = {
+        beer: { usesAbv: false },
+        redWine: { usesAbv: true },
+        whiteWine: { usesAbv: true },
+        whiskey: { usesAbv: true },
+        otherBrewed: { usesAbv: true },
+        distilled: { usesAbv: true },
+        reprocessed: { usesAbv: true },
+        cooking: { usesAbv: false },
+        other: { usesAbv: true },
+        ethanol: { usesAbv: false }
+      };
+
+      const texts = {
+        zh: {
+          langBtn: "English",
+          title: "台灣酒稅計算機",
+          subtitle: "依酒類別、酒精濃度、容量與數量，快速估算酒稅金額。",
+          categoryLabel: "酒類別",
+          abvLabel: "酒精濃度（% ABV）",
+          volumeLabel: "單瓶容量（毫升 ml）",
+          qtyLabel: "數量（瓶）",
+          calcBtn: "計算酒稅",
+          resetBtn: "重設",
+          resultTitle: "計算結果",
+          appliedRule: "套用稅率",
+          perBottle: "每瓶酒稅",
+          total: "總酒稅",
+          invalidInput: "請確認輸入值：容量與數量需大於 0；酒精濃度需介於 0~100。",
+          noAbvNeeded: "此類別不需酒精濃度。",
+          abvNeeded: "請輸入酒精濃度（例如：40 代表 40%）。",
+          categories: {
+            beer: "啤酒",
+            redWine: "紅酒",
+            whiteWine: "白酒",
+            whiskey: "威士忌",
+            otherBrewed: "其他釀造酒",
+            distilled: "蒸餾酒",
+            reprocessed: "再製酒類",
+            cooking: "料理酒",
+            other: "其他酒類",
+            ethanol: "酒精（>90%）"
+          },
+          rules: {
+            beer: "啤酒：每公升 NT$26",
+            redWine: "紅酒（葡萄酒）：每公升酒精每度 NT$7",
+            whiteWine: "白酒（葡萄酒）：每公升酒精每度 NT$7",
+            whiskey: "威士忌（蒸餾酒）：每公升酒精每度 NT$2.5",
+            otherBrewed: "其他釀造酒：每公升酒精每度 NT$7",
+            distilled: "蒸餾酒：每公升酒精每度 NT$2.5",
+            reprocessedHigh: "再製酒（>20%）：每公升 NT$185",
+            reprocessedLow: "再製酒（<=20%）：每公升酒精每度 NT$7",
+            cooking: "料理酒：每公升 NT$9",
+            other: "其他酒類：每公升酒精每度 NT$7",
+            ethanol: "酒精：每公升 NT$15"
+          },
+          legalNote:
+            "依《菸酒稅法》第8條（法規修正日期：2025-01-24）計算，僅供試算參考，不含其他可能稅費。資料來源：" +
+            '<a href="https://law.moj.gov.tw/LawClass/LawAll.aspx?PCode=G0330010" target="_blank" rel="noreferrer noopener">全國法規資料庫</a>'
+        },
+        en: {
+          langBtn: "中文",
+          title: "Taiwan Alcohol Tax Calculator",
+          subtitle: "Estimate alcohol tax by category, ABV, volume, and quantity.",
+          categoryLabel: "Alcohol Category",
+          abvLabel: "Alcohol by Volume (% ABV)",
+          volumeLabel: "Volume per Bottle (ml)",
+          qtyLabel: "Quantity (bottles)",
+          calcBtn: "Calculate",
+          resetBtn: "Reset",
+          resultTitle: "Results",
+          appliedRule: "Applied Rule",
+          perBottle: "Tax per Bottle",
+          total: "Total Tax",
+          invalidInput: "Please check inputs: volume and quantity must be > 0; ABV must be 0~100.",
+          noAbvNeeded: "ABV is not required for this category.",
+          abvNeeded: "Please enter ABV (e.g. 40 means 40%).",
+          categories: {
+            beer: "Beer",
+            redWine: "Red Wine",
+            whiteWine: "White Wine",
+            whiskey: "Whiskey",
+            otherBrewed: "Other Brewed Alcohol",
+            distilled: "Distilled Spirits",
+            reprocessed: "Reprocessed Alcohol",
+            cooking: "Cooking Wine",
+            other: "Other Alcohol",
+            ethanol: "Ethanol (>90%)"
+          },
+          rules: {
+            beer: "Beer: NT$26 per liter",
+            redWine: "Red wine (grape wine): NT$7 per degree-liter",
+            whiteWine: "White wine (grape wine): NT$7 per degree-liter",
+            whiskey: "Whiskey (distilled): NT$2.5 per degree-liter",
+            otherBrewed: "Other brewed: NT$7 per degree-liter",
+            distilled: "Distilled: NT$2.5 per degree-liter",
+            reprocessedHigh: "Reprocessed (>20%): NT$185 per liter",
+            reprocessedLow: "Reprocessed (<=20%): NT$7 per degree-liter",
+            cooking: "Cooking wine: NT$9 per liter",
+            other: "Other alcohol: NT$7 per degree-liter",
+            ethanol: "Ethanol: NT$15 per liter"
+          },
+          legalNote:
+            "Based on Article 8 of Taiwan's Tobacco and Alcohol Tax Act (amended on 2025-01-24). For estimation only; other taxes/fees are not included. Source: " +
+            '<a href="https://law.moj.gov.tw/LawClass/LawAll.aspx?PCode=G0330010" target="_blank" rel="noreferrer noopener">Laws & Regulations Database of The R.O.C. (Taiwan)</a>'
+        }
+      };
+
+      const form = document.getElementById("taxForm");
+      const langBtn = document.getElementById("langBtn");
+      const category = document.getElementById("category");
+      const abv = document.getElementById("abv");
+      const volumeMl = document.getElementById("volumeMl");
+      const quantity = document.getElementById("quantity");
+      const errorText = document.getElementById("errorText");
+      const categoryHint = document.getElementById("categoryHint");
+      const abvHint = document.getElementById("abvHint");
+      const ruleText = document.getElementById("ruleText");
+      const perBottleTax = document.getElementById("perBottleTax");
+      const totalTax = document.getElementById("totalTax");
+      const resetBtn = document.getElementById("resetBtn");
+
+      let lang = "zh";
+
+      function formatMoney(value) {
+        return new Intl.NumberFormat(lang === "zh" ? "zh-TW" : "en-US", {
+          style: "currency",
+          currency: "TWD",
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(value);
+      }
+
+      function setCategoryOptions() {
+        const t = texts[lang];
+        const selected = category.value;
+        category.innerHTML = Object.entries(t.categories)
+          .map(([value, label]) => `<option value="${value}">${label}</option>`)
+          .join("");
+        if (selected) {
+          category.value = selected;
+        }
+      }
+
+      function applyTranslations() {
+        const t = texts[lang];
+        document.documentElement.lang = lang === "zh" ? "zh-Hant" : "en";
+
+        document.querySelectorAll("[data-i18n]").forEach((node) => {
+          const key = node.dataset.i18n;
+          if (key === "legalNote") {
+            node.innerHTML = t[key];
+          } else {
+            node.textContent = t[key];
+          }
+        });
+
+        langBtn.textContent = t.langBtn;
+        setCategoryOptions();
+        syncAbvState();
+        refreshResultLabels();
+      }
+
+      function syncAbvState() {
+        const t = texts[lang];
+        const usesAbv = categoryRates[category.value].usesAbv;
+        abv.disabled = !usesAbv;
+        abvHint.textContent = usesAbv ? t.abvNeeded : t.noAbvNeeded;
+        categoryHint.textContent =
+          category.value === "reprocessed"
+            ? lang === "zh"
+              ? "再製酒會依酒精濃度是否超過 20% 自動套用不同稅率。"
+              : "For reprocessed alcohol, rate changes automatically based on whether ABV exceeds 20%."
+            : "";
+      }
+
+      function calculate() {
+        const t = texts[lang];
+        const type = category.value;
+        const abvNum = Number(abv.value);
+        const volumeL = Number(volumeMl.value) / 1000;
+        const qtyNum = Number(quantity.value);
+
+        const usesAbv = categoryRates[type].usesAbv;
+        if (
+          !Number.isFinite(volumeL) ||
+          !Number.isFinite(qtyNum) ||
+          volumeL <= 0 ||
+          qtyNum <= 0 ||
+          (usesAbv && (!Number.isFinite(abvNum) || abvNum < 0 || abvNum > 100))
+        ) {
+          errorText.textContent = t.invalidInput;
+          return;
+        }
+
+        errorText.textContent = "";
+        let taxPerBottle = 0;
+        let rule = "";
+
+        if (type === "beer") {
+          taxPerBottle = volumeL * 26;
+          rule = t.rules.beer;
+        } else if (type === "otherBrewed" || type === "redWine" || type === "whiteWine") {
+          taxPerBottle = volumeL * abvNum * 7;
+          if (type === "redWine") {
+            rule = t.rules.redWine;
+          } else if (type === "whiteWine") {
+            rule = t.rules.whiteWine;
+          } else {
+            rule = t.rules.otherBrewed;
+          }
+        } else if (type === "distilled" || type === "whiskey") {
+          taxPerBottle = volumeL * abvNum * 2.5;
+          rule = type === "whiskey" ? t.rules.whiskey : t.rules.distilled;
+        } else if (type === "reprocessed") {
+          if (abvNum > 20) {
+            taxPerBottle = volumeL * 185;
+            rule = t.rules.reprocessedHigh;
+          } else {
+            taxPerBottle = volumeL * abvNum * 7;
+            rule = t.rules.reprocessedLow;
+          }
+        } else if (type === "cooking") {
+          taxPerBottle = volumeL * 9;
+          rule = t.rules.cooking;
+        } else if (type === "other") {
+          taxPerBottle = volumeL * abvNum * 7;
+          rule = t.rules.other;
+        } else if (type === "ethanol") {
+          taxPerBottle = volumeL * 15;
+          rule = t.rules.ethanol;
+        }
+
+        const total = taxPerBottle * qtyNum;
+        ruleText.textContent = rule;
+        perBottleTax.textContent = formatMoney(taxPerBottle);
+        totalTax.textContent = formatMoney(total);
+      }
+
+      function refreshResultLabels() {
+        if (ruleText.textContent && ruleText.textContent !== "-") {
+          calculate();
+        } else {
+          ruleText.textContent = "-";
+          perBottleTax.textContent = "-";
+          totalTax.textContent = "-";
+        }
+      }
+
+      langBtn.addEventListener("click", () => {
+        lang = lang === "zh" ? "en" : "zh";
+        applyTranslations();
+      });
+
+      category.addEventListener("change", syncAbvState);
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        calculate();
+      });
+
+      resetBtn.addEventListener("click", () => {
+        category.value = "beer";
+        abv.value = "5";
+        volumeMl.value = "600";
+        quantity.value = "1";
+        errorText.textContent = "";
+        ruleText.textContent = "-";
+        perBottleTax.textContent = "-";
+        totalTax.textContent = "-";
+        syncAbvState();
+      });
+
+      applyTranslations();
+      category.value = "beer";
+      syncAbvState();
+    </script>
+  </body>
+</html>
